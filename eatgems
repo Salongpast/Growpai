@@ -1,0 +1,47 @@
+-- Global flag to control loop
+local running = false
+
+-- Function to place an item at player position
+local function Place(id)
+    local player = GetLocal()
+    local x = player.pos_x / 32
+    local y = player.pos_y / 32
+
+    SendPacketRaw({
+        type = 3,
+        int_data = id,
+        pos_x = player.pos_x,
+        pos_y = player.pos_y,
+        int_x = x,
+        int_y = y,
+    })
+end
+
+function hasInventoryItem(targetId)
+    local inventory = GetInventory()
+    if not inventory then return false end
+    for _, item in pairs(inventory) do
+        if item.id == targetId then
+            return true
+        end
+    end
+    return false
+end
+
+-- Infinite placement loop
+local function PlaceInventory(id)
+    while not (hasInventoryItem(id) == 0) do
+        local inventory = GetInventory()
+        if inventory then
+            for _, item in pairs(inventory) do
+                Place(id)
+                Sleep(50)
+            end
+        end
+        Sleep(100) -- small pause between cycles
+    end
+    log("Placement loop stopped.")
+end
+
+
+PlaceInventory(17068)

@@ -1,0 +1,36 @@
+local taskType = "pt"
+while true do
+     print("Current Task" .. taskType)
+     for i = 0 , 10, 1 do
+          print("i: ".. i)
+     end
+     print("changing Task: " .. taskType)
+     taskType = "ht"
+     print("Current Task \n" .. taskType)
+     for i = 0 , 10, 1 do
+          print("i: ".. i)
+     end
+     print("changing Task: " .. taskType)
+     taskType = "uws"
+     break
+end
+
+type1: 
+check
+-- check current item
+-- check planted seed
+-- recheck mag used
+-- 
+plant
+harvest
+--repeat
+
+type2:
+check
+plant
+check
+splice
+check
+use UWS
+harvest
+--repeat

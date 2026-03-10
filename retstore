@@ -1,0 +1,188 @@
+-- Teleport to tile
+function tp(x, y)
+    SendPacketRaw({
+        type = 0,
+        pos_x = x * 32,
+        pos_y = y * 32
+    })
+end
+
+-- Wrench a tile
+function wrench(x, y)
+    local packet = {
+        type = 3,
+        int_data = 32,
+        int_x = x,
+        int_y = y,
+        pos_x = x * 32,
+        pos_y = y * 32
+    }
+    SendPacketRaw(packet)
+    Sleep(100)
+end
+
+-- Wrench self
+function wrenchSelf()
+    local packet = "action|wrench\n" ..
+                   "|netid|1\n"
+    SendPacket(2, packet)
+    Sleep(100)
+end
+
+-- Open inventory
+function openInventory()
+    local packet = "action|dialog_return\n" ..
+                   "dialog_name|popup\n" ..
+                   "netID|-1|\n" ..
+                   "buttonClicked|extra_inventory\n"
+    SendPacket(2, packet)
+    Sleep(100)
+end
+
+
+-- Retrieve item from extra inventory (batched packets)
+function retrieveItem(itemID, amount, pos)
+    local packet1 = "action|dialog_return\n" ..
+                    "dialog_name|extra_inventory_player\n" ..
+                    "buttonClicked|searchableItemListButton_".. itemID .."_".. amount .."_".. pos .."\n"
+    local packet2 = "action|dialog_return\n" ..
+                    "dialog_name|extra_inventory_player\n" ..
+                    "item_id|".. itemID .."|\n" ..
+                    "pos|".. pos .."|\n" ..
+                    "amount_remove|".. amount .."\n"
+
+    SendPacket(2, packet1)
+    SendPacket(2, packet2)
+    Sleep(100)
+end
+
+-- Check if item is in inventory
+function hasInventoryItem(targetId)
+    local inventory = GetInventory()
+    if not inventory then return false end
+    for _, item in pairs(inventory) do
+        if item.id == targetId then
+            return true
+        end
+    end
+    return false
+end
+function getIDamount(targetId)
+     local inventory = GetInventory()
+    if not inventory then return 0 end
+    for _, item in pairs(inventory) do
+        if item.id == targetId then
+            return item.count
+        end
+    end
+    return 0
+end
+
+function ret1(x, y)
+    local packet = "action|dialog_return\n" ..
+                   "dialog_name|itemsucker_block\n" ..
+                   "tilex|" .. x .. "|\n" ..
+                   "tiley|" .. y .. "|\n" ..
+                   "buttonClicked|retrieveitem\n"
+    SendPacket(2, packet)
+    Sleep(130)
+end
+function ret2(x, y)
+    local packet = "action|dialog_return\n" ..
+                   "dialog_name|itemremovedfromsucker\n" ..
+                   "tilex|" .. x .. "|\n" ..
+                   "tiley|" .. y .. "|\n" ..
+                   "itemtoremove|200\n"
+    SendPacket(2, packet)
+    Sleep(130)
+end
+
+function storeAxe()
+     local packet = "action|dialog_return\n" ..
+                    "dialog_name|extra_inventory_player\n" ..
+                    "item_id|3206|\n" ..
+                    "amount_add|".. getIDamount(3206) .."\n"
+     SendPacket(2, packet)
+     Sleep(100)
+end
+
+function storeAxe()
+     local packet = "action|dialog_return\n" ..
+                    "dialog_name|extra_inventory_player\n" ..
+                    "item_id|17068|\n" ..
+                    "amount_add|".. getIDamount(17068) .."\n"
+     SendPacket(2, packet)
+     Sleep(100)
+end
+
+function dropGem()
+     local packet = "action|drop\n" ..
+                    "|itemID|17068\n"
+     SendPacket(2, packet)
+     Sleep(100)
+end
+
+-- Main logic for one item
+function main(itemID, amount, pos)
+     if getIDamount(3206) then
+          retrieveItem(itemID, amount, pos)    
+     end
+     if getIDamount(17068) > 150 then
+          storeGem() 
+     end
+end
+
+function magTobp()
+
+end
+
+function drop(itemID, count)
+    local packet = "action|dialog_return\n" ..
+                   "dialog_name|drop_item\n" ..
+                   "itemID|" .. itemID .. "\n" ..
+                   "count|" .. count .. "\n"
+    SendPacket(2, packet)
+end
+
+function retDrop(itemID, amount, pos)
+     local s = getIDamount(itemID)
+     if s == 0 then
+          retrieveItem(itemID, amount, pos)    
+     end
+     drop(itemID, s)
+end
+
+-- Guard to prevent multiple runs
+local handled = false
+
+-- Callback to parse dialog and auto-run main for the first item only
+AddCallback("block", "OnVarlist", function(varlist)
+    if varlist[0] == "OnDialogRequest" and not handled then
+        local dialog = varlist[1]
+        local line = dialog:match("add_searchable_item_list|(.-)|listType")
+        if not line then return end
+
+        local numbers, items = {}, {}
+        for num in line:gmatch("%d+") do table.insert(numbers, tonumber(num)) end
+
+        local pos = 0
+        for i = 1, #numbers, 2 do
+            table.insert(items, {id = numbers[i], amount = numbers[i+1], pos = pos})
+            pos = pos + 1
+        end
+
+        -- Only handle target ID 3206 -- 17068
+        for _, entry in ipairs(items) do
+            if entry.id == 17068 then
+                --main(entry.id, entry.amount, entry.pos)
+                retDrop(entry.id, entry.amount, entry.pos)
+                break -- stop after first match
+            end
+        end
+
+        handled = true
+    end
+end)
+
+wrenchSelf()
+openInventory()

@@ -142,9 +142,9 @@ function getIDamount(targetId)
 end
 
 local functions = {
-    ["magTobp"] = function (itemID)
+    ["magTobp"] = function (x,y,itemID)
         if not (getIDamount(itemID) == 0) then storeItem(itemID) end
-        retrieveMag(48,25)
+        retrieveMag(x,y)
     end,
 
     ["bpRetDrop"] = function (itemID)
@@ -173,46 +173,19 @@ local functions = {
             openInventory()
             retrieve = false
         end
-    end
+    end,
+	["fastret"] = function (itemid)
+		retrieveItem(itemid,200,1)
+		drop(itemid)
+	end
 }
 -- Main logic for one item
-function scanAndHit(range)
-    local me = GetLocal()
-    if not me then return end
-
-    local px = math.floor(me.pos_x / 32)
-    local py = math.floor(me.pos_y / 32)
-
-    for dx = -range, range do
-            local tx = px + dx
-            local tile = GetTile(tx, py)
-
-            if tile and tile.fg == 3200 then
-                log("Found target tile 3202 at (" .. tx .. "," .. py .. ")")
-
-                -- Punch packet
-                local pkt = {}
-                pkt.type = 3
-                pkt.int_data = 18 -- punch action
-                pkt.pos_x = tx * 32
-                pkt.pos_y = py * 32
-                pkt.int_x = tx
-                pkt.int_y = py
-                pkt.flags = me.facing_left and 16 or 32
-
-                SendPacketRaw(pkt)
-                Sleep(200) -- delay between hits
-        end
-    end
-end
-
--- Usage: scan 2 tiles around player
 
 function callBack(itemID)
     if not retrieve then return end
     local handled = false
 
-    AddCallback("block", "OnVarlist", function(varlist)
+    local function callback(varlist)
         if handled then return end
         if varlist[0] ~= "OnDialogRequest" then return end
 
@@ -223,7 +196,6 @@ function callBack(itemID)
         local pos = 0
         for id, amount in line:gmatch("(%d+),(%d+)") do
             id, amount = tonumber(id), tonumber(amount)
-
             if id == itemID then
                 retrieveItem(id, amount, pos)
                 break
@@ -231,15 +203,23 @@ function callBack(itemID)
             pos = pos + 1
         end
 
-        handled = true -- don’t reset this
-    end)
+        handled = true
+        RemoveCallback("block") -- important: unregister after handling
+    end
+
+    AddCallback("block", "OnVarlist", callback)
 end
-
-local targetId = 3206 -- axe 3206, coupon 17068
-
---functions["magTobp"](targetId)
---functions["bpRetDrop"](targetId)
---functions["bpTomag"](targetId)
-functions["growchMode"](3206,17068)
-scanAndHit(2)
-
+function mode(type)
+    if (type == 1) then
+            functions["fastret"](3206)
+        else if (type == 2) then
+            functions["magTobp"](47,25,3206)
+        end
+    end
+end
+--functions["bpRetDrop"](17068)
+--functions["bpTomag"](3206)
+--functions["growchMode"](3206,17068)
+--addMag(48,25,200)
+--functions["magTobp"](47,25,3206)
+mode(2)

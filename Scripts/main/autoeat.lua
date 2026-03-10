@@ -38,7 +38,7 @@ local function PlaceInventory(id)
                 Sleep(50)
             end
         end
-        Sleep(100) -- small pause between cycles
+        Sleep(800) -- small pause between cycles
     end
     log("Placement loop stopped.")
 end

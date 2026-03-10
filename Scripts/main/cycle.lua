@@ -2,7 +2,7 @@
 -- STATUS TRACKER
 -- =========================
 local currentStatus = "idle"
-local CurrentSeed = "DarkGrey"  -- start with Grey
+local CurrentSeed = "DarkBrown"  -- start with Grey
 
 -- =========================
 -- MAGPLANT HELPERS
@@ -270,7 +270,10 @@ end
 -- SPLICE LOOP
 -- =========================
 function spliceLoop()
+	local count = 0
     while true do
+		count = count + 1
+		log("Loop " .. count)
         -- Plant first seed (DarkGrey)
         CurrentSeed = "DarkGrey"
         local s1 = getSeedData()
@@ -299,7 +302,6 @@ function spliceLoop()
         log("Harvesting spliced tiles...")
         runHarvesting(s1.Seed, 3207)  -- 3207 = spliced item ID
         Sleep(5000)
-
         log("Splice cycle complete, restarting...")
     end
 end
@@ -311,6 +313,7 @@ end
 function mainLoop()
     while true do
         local s = getSeedData()
+		runHarvesting(s.Seed, s.id)
 
         log("Starting planting phase for "..CurrentSeed)
         runPlanting(s.Seed)
@@ -322,11 +325,11 @@ function mainLoop()
         log("Starting harvesting phase for "..CurrentSeed)
         runHarvesting(s.Seed, s.id)
         Sleep(5000)
-
-        switchSeed()
+		
+		switchSeed()
         log("Cycle complete for "..CurrentSeed..", switching seed...")
     end
 end
 
 mainLoop()
-
+--spliceLoop()

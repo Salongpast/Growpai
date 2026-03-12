@@ -2,7 +2,7 @@
 -- STATUS TRACKER
 -- =========================
 local currentStatus = "idle"
-local CurrentSeed = "DarkBrown"  -- start with Grey
+local CurrentSeed = "DarkGrey"  -- start with Grey
 
 -- =========================
 -- MAGPLANT HELPERS
@@ -78,7 +78,7 @@ end
 
 function canHarvest(x, y, seedID)
     local t = GetTile(x, y)
-    return t and t.fg == seedID
+    return t and t.fg == seedID and t.ready
 end
 
 function harvestTile(x, y, seedID)
